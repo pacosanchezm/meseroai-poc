@@ -153,6 +153,7 @@ function App() {
       return stored ? stored === 'true' : true;
     },
   );
+  const [isTouchDevice, setIsTouchDevice] = useState<boolean>(false);
 
   // Initialize the recording hook.
   const { startRecording, stopRecording, downloadRecording } =
@@ -435,6 +436,13 @@ function App() {
     const storedTranscriptVisible = localStorage.getItem("transcriptVisible");
     if (storedTranscriptVisible) {
       setIsTranscriptVisible(storedTranscriptVisible === "true");
+    }
+    if (typeof window !== 'undefined') {
+      const touch =
+        'ontouchstart' in window ||
+        (navigator as any).maxTouchPoints > 0 ||
+        (navigator as any).msMaxTouchPoints > 0;
+      setIsTouchDevice(touch);
     }
   }, []);
 
@@ -804,6 +812,7 @@ function App() {
         isPTTUserSpeaking={isPTTUserSpeaking}
         handleTalkButtonDown={handleTalkButtonDown}
         handleTalkButtonUp={handleTalkButtonUp}
+        isTouchDevice={isTouchDevice}
       />
     </div>
   );

@@ -9,6 +9,7 @@ interface BottomToolbarProps {
   isPTTUserSpeaking: boolean;
   handleTalkButtonDown: () => void;
   handleTalkButtonUp: () => void;
+  isTouchDevice?: boolean;
 }
 
 function BottomToolbar({
@@ -19,6 +20,7 @@ function BottomToolbar({
   isPTTUserSpeaking,
   handleTalkButtonDown,
   handleTalkButtonUp,
+  isTouchDevice = false,
 }: BottomToolbarProps) {
   const isConnected = sessionStatus === "CONNECTED";
   const isConnecting = sessionStatus === "CONNECTING";
@@ -74,7 +76,10 @@ function BottomToolbar({
           disabled={!isPTTActive}
           className={
             (isPTTUserSpeaking ? "bg-gray-300" : "bg-gray-200") +
-            " py-1 px-4 cursor-pointer rounded-md" +
+            " cursor-pointer" +
+            (isTouchDevice
+              ? " min-w-[110px] min-h-[48px] px-5 py-3 text-base rounded-full"
+              : " py-1 px-4 rounded-md") +
             (!isPTTActive ? " bg-gray-100 text-gray-400" : "")
           }
         >
