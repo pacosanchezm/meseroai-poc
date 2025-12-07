@@ -3,19 +3,20 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
-
-
 import Image from "next/image";
+import { MenuItem } from "./menu/products";
 
 // UI components
 import Transcript from "./components/Transcript";
 import Events from "./components/Events";
-import Board from "./components/Board";
+import Menu from "./components/Menu";
+import Order from "./components/Order";
 import BottomToolbar from "./components/BottomToolbar";
 
 // Types
 import { SessionStatus, BoardContentAction } from "@/app/types";
 import type { RealtimeAgent } from '@openai/agents/realtime';
+import { OrderItem } from "./order/types";
 
 // Context providers & hooks
 import { useTranscript } from "@/app/contexts/TranscriptContext";
@@ -25,13 +26,11 @@ import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 
 // Agent configs
 import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
-import { universityTutorScenario, universityTutorInstitutionName } from "@/app/agentConfigs/universityTutor";
-import { universityTutorEvaluationScenario } from "@/app/agentConfigs/universityTutorEvaluation";
+import { sushiWaiterScenario, sushiWaiterCompanyName } from "@/app/agentConfigs/sushiWaiter";
 
 // Map used by connect logic for scenarios defined via the SDK.
 const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
-  universityTutor: universityTutorScenario,
-  universityTutorEvaluation: universityTutorEvaluationScenario,
+  sushiWaiter: sushiWaiterScenario,
 };
 
 import useAudioDownload from "./hooks/useAudioDownload";
@@ -107,10 +106,14 @@ function App() {
   const [isEventsPaneExpanded, setIsEventsPaneExpanded] =
     useState<boolean>(true);
   const [rightPaneView, setRightPaneView] =
-    useState<"logs" | "board">(() => {
-      if (typeof window === "undefined") return "board";
+    useState<"logs" | "menu" | "order">(() => {
+      if (typeof window === "undefined") return "menu";
       const stored = localStorage.getItem("rightPaneView");
-      return stored === "logs" || stored === "board" ? (stored as "logs" | "board") : "board";
+      if (stored === "board") return "menu";
+      if (stored === "menu" || stored === "logs" || stored === "order") {
+        return stored as "logs" | "menu" | "order";
+      }
+      return "menu";
     });
   const [isTranscriptVisible, setIsTranscriptVisible] =
     useState<boolean>(() => {
@@ -125,6 +128,10 @@ function App() {
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const [boardContentKey, setBoardContentKey] =
     useState<BoardContentAction>("CLEAN");
+  const [menuDisplayItems, setMenuDisplayItems] = useState<MenuItem[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [showPaymentForm, setShowPaymentForm] = useState<boolean>(false);
+  const orderItemsRef = useRef<OrderItem[]>([]);
   const [selectedRealtimeModel, setSelectedRealtimeModel] = useState<string>(
     () => {
       if (typeof window === "undefined") return "gpt-realtime-mini";
@@ -139,10 +146,39 @@ function App() {
   const handleBoardContentAction = useCallback(
     (action: BoardContentAction) => {
       setBoardContentKey(action);
-      addTranscriptBreadcrumb("Board", { action });
+      addTranscriptBreadcrumb("Menú", { action });
     },
     [addTranscriptBreadcrumb],
   );
+  const handleMenuDisplayAction = useCallback(
+    (items: MenuItem[]) => {
+      setMenuDisplayItems(items);
+      addTranscriptBreadcrumb("Menú", { items: items.map((i) => i.id) });
+    },
+    [addTranscriptBreadcrumb],
+  );
+  const handleOrderUpdate = useCallback(
+    (items: OrderItem[]) => {
+      setOrderItems(items);
+      addTranscriptBreadcrumb("Orden", { items: items.map((i) => ({ id: i.id, quantity: i.quantity })) });
+    },
+    [addTranscriptBreadcrumb],
+  );
+  const handlePanelViewChange = useCallback(
+    (view: "menu" | "order" | "logs") => {
+      setRightPaneView(view);
+      addTranscriptBreadcrumb("Panel", { view });
+    },
+    [addTranscriptBreadcrumb],
+  );
+  const handlePaymentVisibilityChange = useCallback(
+    (visible: boolean) => {
+      setShowPaymentForm(visible);
+      addTranscriptBreadcrumb("Pago", { visible });
+    },
+    [addTranscriptBreadcrumb],
+  );
+  const getCurrentOrderItems = useCallback(() => orderItemsRef.current, []);
   const [userText, setUserText] = useState<string>("");
   const [isPTTActive, setIsPTTActive] = useState<boolean>(false);
   const [isPTTUserSpeaking, setIsPTTUserSpeaking] = useState<boolean>(false);
@@ -188,6 +224,10 @@ function App() {
   }, [searchParams]);
 
   useEffect(() => {
+    orderItemsRef.current = orderItems;
+  }, [orderItems]);
+
+  useEffect(() => {
     if (
       autoConnectEnabled &&
       selectedAgentName &&
@@ -202,7 +242,10 @@ function App() {
     if (prevAgentNameRef.current === selectedAgentName) return;
     prevAgentNameRef.current = selectedAgentName;
     setBoardContentKey("CLEAN");
-    addTranscriptBreadcrumb("Board", { action: "CLEAN", reason: "agent_change" });
+    setMenuDisplayItems([]);
+    setOrderItems([]);
+    setShowPaymentForm(false);
+    addTranscriptBreadcrumb("Menú", { action: "CLEAN", reason: "agent_change" });
   }, [selectedAgentName, addTranscriptBreadcrumb]);
 
   useEffect(() => {
@@ -264,10 +307,9 @@ function App() {
         }
 
         const companyNameMap: Record<string, string> = {
-          universityTutor: universityTutorInstitutionName,
-          universityTutorEvaluation: universityTutorInstitutionName,
+          sushiWaiter: sushiWaiterCompanyName,
         };
-        const companyName = companyNameMap[agentSetKey] ?? universityTutorInstitutionName;
+        const companyName = companyNameMap[agentSetKey] ?? sushiWaiterCompanyName;
         const guardrail = createModerationGuardrail(companyName);
 
         await connect({
@@ -278,6 +320,11 @@ function App() {
           extraContext: {
             addTranscriptBreadcrumb,
             handleBoardContentAction,
+            handleMenuDisplayAction,
+            handleOrderUpdate,
+            handlePanelViewChange,
+            handlePaymentVisibilityChange,
+            getCurrentOrderItems,
           },
           model: selectedRealtimeModel,
         });
@@ -430,8 +477,14 @@ function App() {
       setIsAudioPlaybackEnabled(storedAudioPlaybackEnabled === "true");
     }
     const storedRightPaneView = localStorage.getItem("rightPaneView");
-    if (storedRightPaneView === "board" || storedRightPaneView === "logs") {
-      setRightPaneView(storedRightPaneView as "logs" | "board");
+    if (storedRightPaneView === "board") {
+      setRightPaneView("menu");
+    } else if (
+      storedRightPaneView === "menu" ||
+      storedRightPaneView === "logs" ||
+      storedRightPaneView === "order"
+    ) {
+      setRightPaneView(storedRightPaneView as "logs" | "menu" | "order");
     }
     const storedTranscriptVisible = localStorage.getItem("transcriptVisible");
     if (storedTranscriptVisible) {
@@ -572,14 +625,16 @@ function App() {
         >
           <div className="flex items-center">
             <Image
-              src="/tutor-ia-uveg-logo.jpg"
-              alt="Tutor-IA UVEG"
-              width={160}
-              height={160}
-              className="object-contain max-w-[160px] mix-blend-multiply"
+              src="/sushifactory.jpeg"
+              alt="Sushi Factory"
+              width={80}
+              height={80}
+              className="object-contain max-w-[80px] mix-blend-multiply"
             />
           </div>
-          <div className="text-3xl font-semibold text-gray-900">Tutor-ia</div>
+          <div className="text-3xl font-semibold text-gray-900">
+            Sushi Factory
+          </div>
         </div>
         <div className="flex items-center gap-4 flex-wrap justify-end">
           <div className="relative" ref={profileMenuRef}>
@@ -594,7 +649,7 @@ function App() {
             {isProfileMenuOpen && (
               <div className="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-xl p-4 space-y-3 z-20">
                 <label className="block text-sm font-medium text-gray-600">
-                  Alumno
+                  Cliente
                 </label>
                 <input
                   type="text"
@@ -717,14 +772,25 @@ function App() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setRightPaneView("board")}
+                      onClick={() => setRightPaneView("menu")}
                       className={`flex-1 px-2 py-1 text-sm ${
-                        rightPaneView === "board"
+                        rightPaneView === "menu"
                           ? "bg-gray-900 text-white"
                           : "bg-white text-gray-700"
                       }`}
                     >
-                      Board
+                      Menú
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRightPaneView("order")}
+                      className={`flex-1 px-2 py-1 text-sm ${
+                        rightPaneView === "order"
+                          ? "bg-gray-900 text-white"
+                          : "bg-white text-gray-700"
+                      }`}
+                    >
+                      Orden
                     </button>
                   </div>
                 </div>
@@ -793,13 +859,22 @@ function App() {
               isTranscriptVisible ? "w-1/2 overflow-auto" : "w-full overflow-auto"
             }
           />
-        ) : (
-          <Board
+        ) : rightPaneView === "menu" ? (
+          <Menu
             isExpanded={isEventsPaneExpanded}
             expandedWidthClass={
               isTranscriptVisible ? "w-1/2 overflow-auto" : "w-full overflow-auto"
             }
-            contentKey={boardContentKey}
+            items={menuDisplayItems}
+          />
+        ) : (
+          <Order
+            isExpanded={isEventsPaneExpanded}
+            expandedWidthClass={
+              isTranscriptVisible ? "w-1/2 overflow-auto" : "w-full overflow-auto"
+            }
+            items={orderItems}
+            showPayment={showPaymentForm}
           />
         )}
       </div>

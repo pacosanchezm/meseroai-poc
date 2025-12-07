@@ -3,8 +3,8 @@ import "./globals.css";
 import "./lib/envSetup";
 
 export const metadata: Metadata = {
-  title: "Tutor-ia -- Demo",
-  description: "Demo de herramienta de tutor ia para estudiantes de licenciatura",
+  title: "Mesero IA - Sushi Factory",
+  description: "Demo de mesero virtual para Sushi Factory",
 };
 
 export default function RootLayout({
