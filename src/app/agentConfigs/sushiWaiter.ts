@@ -1,9 +1,42 @@
 import { RealtimeAgent } from '@openai/agents/realtime';
-import { getMenuItemsTool } from './menuTool';
 import { setMenuDisplayTool } from './menuDisplayTool';
 import { setOrderItemsTool } from './orderTool';
 import { setPanelViewTool } from './panelViewTool';
 import { setPaymentVisibilityTool } from './paymentTool';
+import { tool } from './types';
+import { menuItems } from '../menu/products';
+
+// Inline tool to fetch full menu (replaces removed menuTool file)
+const getMenuItemsTool = tool({
+  name: 'get_menu_items',
+  description:
+    'Devuelve TODO el menú de Sushi Factory (nombre, descripción, precio en pesos e imagen). No uses filtros; siempre trae el catálogo completo.',
+  parameters: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'Ignorado; siempre se devuelve el catálogo completo.',
+      },
+    },
+    required: [],
+    additionalProperties: false,
+  },
+  execute: async () => {
+    return {
+      items: menuItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        imageUrl: item.imageUrl,
+        category: item.category,
+        tags: item.tags,
+        currency: item.currency,
+      })),
+    };
+  },
+});
 
 export const sushiWaiterAgent = new RealtimeAgent({
   name: 'sushiWaiter',

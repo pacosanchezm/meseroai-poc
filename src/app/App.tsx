@@ -14,7 +14,7 @@ import Order from "./components/Order";
 import BottomToolbar from "./components/BottomToolbar";
 
 // Types
-import { SessionStatus, BoardContentAction } from "@/app/types";
+import { SessionStatus } from "@/app/types";
 import type { RealtimeAgent } from '@openai/agents/realtime';
 import { OrderItem } from "./order/types";
 
@@ -126,8 +126,6 @@ function App() {
   const settingsMenuRef = useRef<HTMLDivElement | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
-  const [boardContentKey, setBoardContentKey] =
-    useState<BoardContentAction>("CLEAN");
   const [menuDisplayItems, setMenuDisplayItems] = useState<MenuItem[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [showPaymentForm, setShowPaymentForm] = useState<boolean>(false);
@@ -143,13 +141,6 @@ function App() {
     return localStorage.getItem("studentName") ?? "";
   });
   const prevAgentNameRef = useRef<string | null>(null);
-  const handleBoardContentAction = useCallback(
-    (action: BoardContentAction) => {
-      setBoardContentKey(action);
-      addTranscriptBreadcrumb("Menú", { action });
-    },
-    [addTranscriptBreadcrumb],
-  );
   const handleMenuDisplayAction = useCallback(
     (items: MenuItem[]) => {
       setMenuDisplayItems(items);
@@ -241,7 +232,6 @@ function App() {
     if (!selectedAgentName) return;
     if (prevAgentNameRef.current === selectedAgentName) return;
     prevAgentNameRef.current = selectedAgentName;
-    setBoardContentKey("CLEAN");
     setMenuDisplayItems([]);
     setOrderItems([]);
     setShowPaymentForm(false);
@@ -319,7 +309,6 @@ function App() {
           outputGuardrails: [guardrail],
           extraContext: {
             addTranscriptBreadcrumb,
-            handleBoardContentAction,
             handleMenuDisplayAction,
             handleOrderUpdate,
             handlePanelViewChange,
