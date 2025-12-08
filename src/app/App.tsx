@@ -132,8 +132,8 @@ function App() {
   const orderItemsRef = useRef<OrderItem[]>([]);
   const [selectedRealtimeModel, setSelectedRealtimeModel] = useState<string>(
     () => {
-      if (typeof window === "undefined") return "gpt-realtime-mini";
-      return localStorage.getItem("realtimeModel") ?? "gpt-realtime-mini";
+      if (typeof window === "undefined") return "gpt-realtime";
+      return localStorage.getItem("realtimeModel") ?? "gpt-realtime";
     },
   );
   const [studentName, setStudentName] = useState<string>(() => {
@@ -217,6 +217,18 @@ function App() {
   useEffect(() => {
     orderItemsRef.current = orderItems;
   }, [orderItems]);
+
+  // Allow setting client name via URL param ?cliente=... or ?customerName=...
+  useEffect(() => {
+    const paramName =
+      searchParams.get("cliente") ?? searchParams.get("customerName");
+    if (paramName) {
+      setStudentName(paramName);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("studentName", paramName);
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (
@@ -616,12 +628,18 @@ function App() {
             <Image
               src="/sushifactory.jpeg"
               alt="Sushi Factory"
-              width={80}
-              height={80}
-              className="object-contain max-w-[80px] mix-blend-multiply"
+              width={isTouchDevice ? 40 : 120}
+              height={isTouchDevice ? 40 : 120}
+              className={`object-contain mix-blend-multiply ${
+                isTouchDevice ? "max-w-[40px]" : "max-w-[120px]"
+              }`}
             />
           </div>
-          <div className="text-3xl font-semibold text-gray-900">
+          <div
+            className={`font-semibold text-gray-900 ${
+              isTouchDevice ? "text-lg" : "text-3xl"
+            }`}
+          >
             Sushi Factory
           </div>
         </div>
@@ -644,7 +662,7 @@ function App() {
                   type="text"
                   value={studentName}
                   onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="Nombre del alumno"
+                  placeholder="Nombre del cliente"
                   className="border border-gray-300 rounded-md text-sm px-2 py-1 w-full focus:outline-none"
                 />
               </div>
@@ -877,6 +895,7 @@ function App() {
         handleTalkButtonDown={handleTalkButtonDown}
         handleTalkButtonUp={handleTalkButtonUp}
         isTouchDevice={isTouchDevice}
+        compact={isTouchDevice}
       />
     </div>
   );

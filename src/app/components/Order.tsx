@@ -28,8 +28,16 @@ function Order({ isExpanded, expandedWidthClass, items = [], showPayment = false
           </div>
           <div className="p-6 text-sm text-gray-700 leading-relaxed space-y-4 h-full flex flex-col">
             {items.length === 0 ? (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm italic">
-                La orden está vacía.
+              <div className="w-full h-full flex items-center justify-center relative">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <Image
+                    src="/logoagua.webp"
+                    alt="Logo mesero.ai"
+                    fill
+                    className="object-contain opacity-30"
+                    sizes="100vw"
+                  />
+                </div>
               </div>
             ) : (
               <div className="space-y-3">

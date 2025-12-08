@@ -10,6 +10,7 @@ interface BottomToolbarProps {
   handleTalkButtonDown: () => void;
   handleTalkButtonUp: () => void;
   isTouchDevice?: boolean;
+  compact?: boolean;
 }
 
 function BottomToolbar({
@@ -21,6 +22,7 @@ function BottomToolbar({
   handleTalkButtonDown,
   handleTalkButtonUp,
   isTouchDevice = false,
+  compact = false,
 }: BottomToolbarProps) {
   const isConnected = sessionStatus === "CONNECTED";
   const isConnecting = sessionStatus === "CONNECTING";
@@ -32,7 +34,9 @@ function BottomToolbar({
   }
 
   function getConnectionButtonClasses() {
-    const baseClasses = "text-white text-base p-2 w-36 rounded-md h-full";
+    const baseClasses = compact
+      ? "text-white text-sm p-2 w-24 rounded-md h-full"
+      : "text-white text-base p-2 w-36 rounded-md h-full";
     const cursorClass = isConnecting ? "cursor-not-allowed" : "cursor-pointer";
 
     if (isConnected) {
@@ -51,7 +55,9 @@ function BottomToolbar({
 
   return (
     <div
-      className="p-4 flex flex-row items-center justify-center gap-x-8 select-none"
+      className={`flex flex-row items-center justify-center select-none ${
+        compact ? "p-2 gap-x-4" : "p-4 gap-x-8"
+      }`}
       style={preventTextSelection}
     >
       <button
@@ -73,9 +79,11 @@ function BottomToolbar({
         />
         <label
           htmlFor="push-to-talk"
-          className="flex items-center cursor-pointer"
+          className={`flex items-center cursor-pointer ${
+            compact ? "text-xs" : "text-sm"
+          }`}
         >
-          Pulsar para hablar
+          Pulsar / hablar
         </label>
         <button
           onMouseDown={handleTalkButtonDown}
@@ -93,7 +101,7 @@ function BottomToolbar({
             (isPTTUserSpeaking ? "bg-gray-300" : "bg-gray-200") +
             " cursor-pointer" +
             (isTouchDevice
-              ? " min-w-[110px] min-h-[48px] px-5 py-3 text-base rounded-full"
+              ? " min-w-[100px] min-h-[40px] px-4 py-2 text-sm rounded-full"
               : " py-1 px-4 rounded-md") +
             (!isPTTActive ? " bg-gray-100 text-gray-400" : "")
           }
