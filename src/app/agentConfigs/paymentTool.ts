@@ -3,7 +3,7 @@ import { tool } from '@openai/agents/realtime';
 export const setPaymentVisibilityTool = tool({
   name: 'set_payment_visibility',
   description:
-    'Muestra u oculta la sección de pago con tarjeta en el panel de orden.',
+    'Muestra u oculta la sección de pago (efectivo, tarjeta y Enlace Gourmet) en el panel de orden.',
   parameters: {
     type: 'object',
     properties: {
