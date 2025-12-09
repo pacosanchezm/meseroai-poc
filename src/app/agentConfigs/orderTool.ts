@@ -41,37 +41,35 @@ export const setOrderItemsTool = tool({
     const currentOrder = getCurrentOrderItems?.() ?? [];
 
     const validItems = Array.isArray(items)
-      ? items
-          .filter((it) => it.quantity && it.quantity > 0)
-          .map((it) => {
-            const product = menuItems.find((p) => p.id === it.id);
-            if (!product) return null;
-            return {
-              id: product.id,
-              name: product.name,
-              quantity: Math.round(it.quantity),
-              price: product.price,
-              currency: product.currency,
-              imageUrl: product.imageUrl,
-            } satisfies OrderItem;
-          })
-          .filter(Boolean) as OrderItem[]
+      ? items.filter((it) => it.quantity && it.quantity > 0)
       : [];
 
-    // Merge with existing order: add quantities for repeated items.
+    // Deduplicate incoming items and replace quantities for those IDs.
+    const incomingMap = new Map<string, OrderItem>();
+    validItems.forEach((it) => {
+      const product = menuItems.find((p) => p.id === it.id);
+      if (!product) return;
+      const existing = incomingMap.get(it.id);
+      const qty = Math.round(it.quantity);
+      incomingMap.set(it.id, {
+        id: product.id,
+        name: product.name,
+        quantity: (existing?.quantity ?? 0) + qty,
+        price: product.price,
+        currency: product.currency,
+        imageUrl: product.imageUrl,
+      });
+    });
+
     let newOrder: OrderItem[] = [];
     if (!Array.isArray(items) || items.length === 0) {
       newOrder = [];
     } else {
       const orderMap = new Map<string, OrderItem>();
       currentOrder.forEach((it) => orderMap.set(it.id, { ...it }));
-      validItems.forEach((it) => {
-        const existing = orderMap.get(it.id);
-        if (existing) {
-          orderMap.set(it.id, { ...existing, quantity: existing.quantity + it.quantity });
-        } else {
-          orderMap.set(it.id, it);
-        }
+      // Replace quantities for provided IDs
+      incomingMap.forEach((incoming, id) => {
+        orderMap.set(id, incoming);
       });
       newOrder = Array.from(orderMap.values());
     }
