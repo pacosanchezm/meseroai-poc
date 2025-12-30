@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "sushifactory.app",
       },
+      {
+        protocol: "https",
+        hostname: "static.wixstatic.com",
+      },
     ],
   },
 };

@@ -1,6 +1,6 @@
 import { tool } from '@openai/agents/realtime';
-import { menuItems } from '@/app/menu/products';
 import { OrderItem } from '@/app/order/types';
+import { MenuItem } from '@/app/menu/types';
 
 export const setOrderItemsTool = tool({
   name: 'set_order_items',
@@ -45,9 +45,12 @@ export const setOrderItemsTool = tool({
       : [];
 
     // Deduplicate incoming items and replace quantities for those IDs.
+    const ctxItems = (details?.context as any)?.menuItems as MenuItem[] | undefined;
+    const sourceItems = ctxItems && Array.isArray(ctxItems) ? ctxItems : [];
+
     const incomingMap = new Map<string, OrderItem>();
     validItems.forEach((it) => {
-      const product = menuItems.find((p) => p.id === it.id);
+      const product = sourceItems.find((p) => p.id === it.id);
       if (!product) return;
       const existing = incomingMap.get(it.id);
       const qty = Math.round(it.quantity);

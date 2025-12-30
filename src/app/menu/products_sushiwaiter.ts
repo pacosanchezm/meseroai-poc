@@ -1,17 +1,6 @@
-export interface MenuItem {
-  id: string;
-  name: string;
-  description?: string;
-  category?: string;
-  price?: number;
-  currency?: string;
-  available?: boolean;
-  tags?: string[];
-  imageUrl?: string;
-}
+import { MenuItem } from "./types";
 
-// Catálogo base de productos. Se puede extender con precios, descripciones, etc.
-export const menuItems: MenuItem[] = [
+export const menuItemsSushiWaiter: MenuItem[] = [
   {
     id: "yakimeshi",
     name: "Yakimeshi",

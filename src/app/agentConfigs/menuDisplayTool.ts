@@ -1,5 +1,5 @@
 import { tool } from '@openai/agents/realtime';
-import { menuItems, MenuItem } from '@/app/menu/products';
+import { MenuItem } from '@/app/menu/types';
 
 function normalize(text: string) {
   return text.toLowerCase();
@@ -36,11 +36,14 @@ export const setMenuDisplayTool = tool({
   execute: async (input, details) => {
     const { item_ids, query } = input as { item_ids?: string[]; query?: string };
 
-    let itemsToShow: MenuItem[] = menuItems;
+    const ctxItems = (details?.context as any)?.menuItems as MenuItem[] | undefined;
+    const sourceItems = ctxItems && Array.isArray(ctxItems) ? ctxItems : [];
+
+    let itemsToShow: MenuItem[] = sourceItems;
     if (Array.isArray(item_ids) && item_ids.length > 0) {
-      itemsToShow = menuItems.filter((item) => item_ids.includes(item.id));
+      itemsToShow = sourceItems.filter((item) => item_ids.includes(item.id));
     } else if (query) {
-      itemsToShow = menuItems.filter((item) => matchesQuery(item, query));
+      itemsToShow = sourceItems.filter((item) => matchesQuery(item, query));
     }
 
     const handler = (details?.context as any)?.handleMenuDisplayAction as

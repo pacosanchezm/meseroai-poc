@@ -2,15 +2,23 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { MenuItem } from "@/app/menu/products";
+import { MenuItem } from "@/app/menu/types";
 
 export interface MenuProps {
   isExpanded: boolean;
   expandedWidthClass?: string;
   items?: MenuItem[];
+  brandingLogoSrc?: string;
+  watermarkLogoSrc?: string;
 }
 
-function Menu({ isExpanded, expandedWidthClass, items = [] }: MenuProps) {
+function Menu({
+  isExpanded,
+  expandedWidthClass,
+  items = [],
+  brandingLogoSrc,
+  watermarkLogoSrc,
+}: MenuProps) {
   const widthWhenExpanded = expandedWidthClass ?? "w-1/2 overflow-auto";
   const containerClass =
     (isExpanded ? widthWhenExpanded : "w-0 overflow-hidden opacity-0") +
@@ -30,10 +38,10 @@ function Menu({ isExpanded, expandedWidthClass, items = [] }: MenuProps) {
               <div className="w-full h-full flex items-center justify-center relative">
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <Image
-                    src="/logoagua.webp"
-                    alt="Logo mesero.ai"
+                    src={watermarkLogoSrc || brandingLogoSrc || "/logoagua.webp"}
+                    alt="Logo"
                     fill
-                    className="object-contain opacity-30"
+                    className="object-contain opacity-20"
                     sizes="100vw"
                   />
                 </div>

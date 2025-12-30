@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
 import Image from "next/image";
-import { MenuItem } from "./menu/products";
+import { MenuItem } from "./menu/types";
 
 // UI components
 import Transcript from "./components/Transcript";
@@ -27,10 +27,15 @@ import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 // Agent configs
 import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
 import { sushiWaiterScenario, sushiWaiterCompanyName } from "@/app/agentConfigs/sushiWaiter";
+import { brogaCafeScenario, brogaCafeCompanyName } from "@/app/agentConfigs/brogaCafe";
+import { agentBranding, defaultBranding } from "@/app/agentConfigs/branding";
+import { menuItemsSushiWaiter } from "./menu/products_sushiwaiter";
+import { menuItemsBrogaCafe } from "./menu/products_broga";
 
 // Map used by connect logic for scenarios defined via the SDK.
 const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
   sushiWaiter: sushiWaiterScenario,
+  brogaCafe: brogaCafeScenario,
 };
 
 import useAudioDownload from "./hooks/useAudioDownload";
@@ -310,9 +315,12 @@ function App() {
 
         const companyNameMap: Record<string, string> = {
           sushiWaiter: sushiWaiterCompanyName,
+          brogaCafe: brogaCafeCompanyName,
         };
         const companyName = companyNameMap[agentSetKey] ?? sushiWaiterCompanyName;
         const guardrail = createModerationGuardrail(companyName);
+
+        const menuItemsForAgent = menuItemsMap[agentSetKey] ?? [];
 
         await connect({
           getEphemeralKey: async () => EPHEMERAL_KEY,
@@ -326,6 +334,7 @@ function App() {
             handlePanelViewChange,
             handlePaymentVisibilityChange,
             getCurrentOrderItems,
+            menuItems: menuItemsForAgent,
           },
           model: selectedRealtimeModel,
         });
@@ -615,7 +624,12 @@ function App() {
     };
   }, [sessionStatus]);
 
-  const agentSetKey = searchParams.get("agentConfig") || "default";
+  const agentSetKey = searchParams.get("agentConfig") || defaultAgentSetKey;
+  const branding = agentBranding[agentSetKey] ?? defaultBranding;
+  const menuItemsMap: Record<string, MenuItem[]> = {
+    sushiWaiter: menuItemsSushiWaiter,
+    brogaCafe: menuItemsBrogaCafe,
+  };
 
   return (
     <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 relative">
@@ -626,8 +640,8 @@ function App() {
         >
           <div className="flex items-center">
             <Image
-              src="/sushifactory.jpeg"
-              alt="Sushi Factory"
+              src={branding.logoSrc}
+              alt={branding.title}
               width={isTouchDevice ? 40 : 120}
               height={isTouchDevice ? 40 : 120}
               className={`object-contain mix-blend-multiply ${
@@ -640,7 +654,7 @@ function App() {
               isTouchDevice ? "text-lg" : "text-3xl"
             }`}
           >
-            Sushi Factory
+            {branding.title}
           </div>
         </div>
         <div className="flex items-center gap-4 flex-wrap justify-end">
@@ -873,6 +887,8 @@ function App() {
               isTranscriptVisible ? "w-1/2 overflow-auto" : "w-full overflow-auto"
             }
             items={menuDisplayItems}
+            brandingLogoSrc={branding.logoSrc}
+            watermarkLogoSrc={branding.watermarkLogoSrc}
           />
         ) : (
           <Order
@@ -882,6 +898,9 @@ function App() {
             }
             items={orderItems}
             showPayment={showPaymentForm}
+            brandingLogoSrc={branding.logoSrc}
+            watermarkLogoSrc={branding.watermarkLogoSrc}
+            allowGourmetLink={branding.allowGourmetLink}
           />
         )}
       </div>

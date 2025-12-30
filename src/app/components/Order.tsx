@@ -9,11 +9,22 @@ export interface OrderProps {
   expandedWidthClass?: string;
   items?: OrderItem[];
   showPayment?: boolean;
+  brandingLogoSrc?: string;
+  watermarkLogoSrc?: string;
+  allowGourmetLink?: boolean;
 }
 
 type PaymentMethod = "cash" | "card" | "points";
 
-function Order({ isExpanded, expandedWidthClass, items = [], showPayment = false }: OrderProps) {
+function Order({
+  isExpanded,
+  expandedWidthClass,
+  items = [],
+  showPayment = false,
+  brandingLogoSrc,
+  watermarkLogoSrc,
+  allowGourmetLink = true,
+}: OrderProps) {
   const widthWhenExpanded = expandedWidthClass ?? "w-1/2 overflow-auto";
   const containerClass =
     (isExpanded ? widthWhenExpanded : "w-0 overflow-hidden opacity-0") +
@@ -22,14 +33,22 @@ function Order({ isExpanded, expandedWidthClass, items = [], showPayment = false
   const total = items.reduce((acc, item) => acc + (item.price ?? 0) * item.quantity, 0);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>("card");
 
-  const paymentOptions = useMemo(
-    () => [
+  const paymentOptions = useMemo(() => {
+    const base = [
       { key: "cash" as PaymentMethod, label: "Efectivo" },
       { key: "card" as PaymentMethod, label: "Tarjeta" },
-      { key: "points" as PaymentMethod, label: "Enlace Gourmet" },
-    ],
-    []
-  );
+    ];
+    if (allowGourmetLink) {
+      base.push({ key: "points" as PaymentMethod, label: "Enlace Gourmet" });
+    }
+    return base;
+  }, [allowGourmetLink]);
+
+  React.useEffect(() => {
+    if (!allowGourmetLink && selectedPayment === "points") {
+      setSelectedPayment("card");
+    }
+  }, [allowGourmetLink, selectedPayment]);
 
   return (
     <div className={containerClass}>
@@ -43,10 +62,10 @@ function Order({ isExpanded, expandedWidthClass, items = [], showPayment = false
               <div className="w-full h-full flex items-center justify-center relative">
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <Image
-                    src="/logoagua.webp"
-                    alt="Logo mesero.ai"
+                    src={watermarkLogoSrc || brandingLogoSrc || "/logoagua.webp"}
+                    alt="Logo"
                     fill
-                    className="object-contain opacity-30"
+                    className="object-contain opacity-20"
                     sizes="100vw"
                   />
                 </div>
