@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const model = searchParams.get("model") ?? "gpt-realtime";
   try {
     const response = await fetch(
-      "https://api.openai.com/v1/realtime/sessions",
+      "https://api.openai.com/v1/realtime/client_secrets",
       {
         method: "POST",
         headers: {
@@ -13,11 +13,24 @@ export async function GET(request: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model,
+          session: {
+            type: "realtime",
+            model,
+          },
         }),
       }
     );
     const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Realtime client secret error:", {
+        model,
+        status: response.status,
+        data,
+      });
+      return NextResponse.json(data, { status: response.status });
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error in /session:", error);
