@@ -705,6 +705,7 @@ function App() {
                     <option value="gpt-realtime-mini">gpt-realtime-mini</option>
                     <option value="gpt-realtime">gpt-realtime</option>
                     <option value="gpt-realtime-1.5">gpt-realtime-1.5</option>
+                    <option value="gpt-realtime-2">gpt-realtime-2</option>
                   </select>
                 </div>
 
